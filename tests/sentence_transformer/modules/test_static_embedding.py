@@ -56,6 +56,17 @@ def test_tokenize_after_transformers_tokenizer_call(tokenizer: Tokenizer, tokeni
     assert torch.equal(tokens["offsets"], expected["offsets"])
 
 
+def test_preprocess_flattens_token_ids_with_offsets(static_embedding: StaticEmbedding) -> None:
+    texts = ["Hello world!", "", "How are you?"]
+    per_text_ids = [static_embedding.tokenizer.encode(text, add_special_tokens=False).ids for text in texts]
+
+    tokens = static_embedding.preprocess(texts)
+
+    assert tokens["input_ids"].dtype == torch.long
+    assert tokens["input_ids"].tolist() == [token_id for ids in per_text_ids for token_id in ids]
+    assert tokens["offsets"].tolist() == [0, len(per_text_ids[0]), len(per_text_ids[0]) + len(per_text_ids[1])]
+
+
 def test_forward(static_embedding: StaticEmbedding) -> None:
     texts = ["Hello world!", "How are you?"]
     tokens = static_embedding.preprocess(texts)

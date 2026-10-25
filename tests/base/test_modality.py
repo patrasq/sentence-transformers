@@ -326,6 +326,25 @@ class TestInferModality:
     def test_audio_url_detected_when_supported(self):
         assert infer_modality("https://example.com/clip.mp3", supported_modalities=["text", "audio"]) == "audio"
 
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "photo.jpg",
+            "data:image/png;base64,iVBOR",
+            "https://[[invalid]]/photo.jpg",
+            "https://example.com/clip.mp4",
+            "",
+        ],
+    )
+    def test_strings_are_text_when_no_media_modality_supported(self, text: str):
+        assert infer_modality(text, supported_modalities=["text"]) == "text"
+
+    def test_existing_image_file_is_text_only_when_images_unsupported(self, tmp_path):
+        image_path = str(tmp_path / "picture.png")
+        Image.new("RGB", (2, 2)).save(image_path)
+        assert infer_modality(image_path, supported_modalities=["text"]) == "text"
+        assert infer_modality(image_path, supported_modalities=["text", "image"]) == "image"
+
     def test_youtube_url_with_trailing_text_is_text(self):
         """The exact case from the bug report: a YouTube URL followed by a description."""
         text = (

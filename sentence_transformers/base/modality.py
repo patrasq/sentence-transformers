@@ -741,6 +741,14 @@ def infer_modality(
     Raises:
         ValueError: If the input type/structure is not recognized.
     """
+    # With no media modality supported, every string falls back to "text" below, so skip the URL/path checks.
+    if (
+        isinstance(sample, str)
+        and supported_modalities is not None
+        and not any(modality in supported_modalities for modality in ("image", "video", "audio"))
+    ):
+        return "text"
+
     # Not a part of the match statement as it would match None if PIL is not installed
     if PILImage is not None and isinstance(sample, PILImage):
         return "image"

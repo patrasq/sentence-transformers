@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import inspect
+import itertools
 import logging
 import math
 import os
@@ -114,9 +115,12 @@ class StaticEmbedding(InputModule):
             inputs = self._prepend_prompt(inputs, prompt)
         encodings = self.tokenizer.encode_batch(inputs, add_special_tokens=False)
         encodings_ids = [encoding.ids for encoding in encodings]
+        lengths = [len(token_ids) for token_ids in encodings_ids]
 
-        offsets = torch.from_numpy(np.cumsum([0] + [len(token_ids) for token_ids in encodings_ids[:-1]]))
-        input_ids = torch.tensor([token_id for token_ids in encodings_ids for token_id in token_ids], dtype=torch.long)
+        offsets = torch.from_numpy(np.cumsum([0] + lengths[:-1]))
+        input_ids = torch.from_numpy(
+            np.fromiter(itertools.chain.from_iterable(encodings_ids), dtype=np.int64, count=sum(lengths))
+        )
         return {"input_ids": input_ids, "offsets": offsets}
 
     def forward(self, features: dict[str, torch.Tensor], **kwargs) -> dict[str, torch.Tensor]:
