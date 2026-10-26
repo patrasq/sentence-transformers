@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - ci-perf-static-encode
       - "*-release"
   pull_request:
     branches:
